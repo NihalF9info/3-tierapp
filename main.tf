@@ -313,7 +313,15 @@ resource "aws_instance" "web_server" {
   subnet_id              = aws_subnet.public_subnet-1.id
   vpc_security_group_ids = [aws_security_group.web-sg.id]
   associate_public_ip_address = true
+   disable_api_termination     = true
   user_data = file("user_data_web.sh")
+   metadata_options {
+    http_tokens = "required"
+  }
+
+  root_block_device {
+    encrypted = true
+  }
 
   tags = {
     Name = "web-server"
@@ -337,6 +345,15 @@ resource "aws_instance" "app-server" {
   vpc_security_group_ids = [aws_security_group.app-sg.id]
   associate_public_ip_address = false
   user_data = file("user_data_app.sh")
+  disable_api_termination     = true
+
+  metadata_options {
+    http_tokens = "required"
+  }
+
+  root_block_device {
+    encrypted = true
+  }
 
   tags = {
     Name = "app-server"
@@ -440,7 +457,7 @@ resource "aws_lb" "alb" {
   aws_subnet.public_subnet-2.id
 ]
 
-
+  drop_invalid_header_fields = true
   enable_deletion_protection = true
 
   tags = {
