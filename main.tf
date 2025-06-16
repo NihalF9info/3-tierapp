@@ -381,6 +381,9 @@ resource "aws_db_instance" "default" {
   skip_final_snapshot  = true
   db_subnet_group_name   = aws_db_subnet_group.db_subnet.name
   vpc_security_group_ids = [aws_security_group.db-sg.id]
+  backup_retention_period          = 7
+  storage_encrypted                = true
+  iam_database_authentication_enabled = true
 
   publicly_accessible = false
   multi_az            = false
@@ -397,10 +400,21 @@ output "rds_endpoint" {
 resource "aws_s3_bucket" "s3_bucket" {
   bucket = "threetier-app-code-nihal" 
 
+  versioning {
+    enabled    = true
+    mfa_delete = true  # Note: This must be enabled manually in AWS console
+  }
+
+logging {
+    target_bucket = "log-bucket-name"
+    target_prefix = "log/"
+  }
+
   tags = {
     Name        = "My bucket"
     Environment = "Dev"
   }
+  
 }
 # block public access 
 resource "aws_s3_bucket_public_access_block" "s3_block" {
@@ -441,6 +455,7 @@ resource "aws_lb_target_group" "alb-tg" {
   port        = 80
   protocol    = "HTTP"
   vpc_id      = aws_vpc.terra_vpc.id
+
 }
 resource "aws_lb_target_group_attachment" "test" {
   target_group_arn = aws_lb_target_group.alb-tg.arn
